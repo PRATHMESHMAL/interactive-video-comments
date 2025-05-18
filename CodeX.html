@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube-Style Video Player</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --text-color: #f1f1f1;
+            --header-bg: #181818;
+            --video-bg: #000;
+            --comment-bg: #212121;
+            --comment-border: #3c3c3c;
+            --accent-color: #ff0000;
+            --button-bg: #272727;
+            --button-hover-bg: #3c3c3c;
+            --highlight-bg: #2d2d2d;
+            --scrollbar-track: #212121;
+            --scrollbar-thumb: #606060;
+            --footer-bg: #181818;
+            --footer-text: #aaaaaa;
+            --transition: all 0.3s ease;
+            --bg-gradient-start: rgba(15, 15, 15, 0.9);
+            --bg-gradient-end: rgba(40, 40, 40, 0.9);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #fff;
+            --text-color: #0f0f0f;
+            --header-bg: #fff;
+            --video-bg: #000;
+            --comment-bg: #f9f9f9;
+            --comment-border: #e0e0e0;
+            --accent-color: #cc0000;
+            --button-bg: #f1f1f1;
+            --button-hover-bg: #e0e0e0;
+            --highlight-bg: #f0f0f0;
+            --scrollbar-track: #f1f1f1;
+            --scrollbar-thumb: #888;
+            --footer-bg: #f1f1f1;
+            --footer-text: #333333;
+            --bg-gradient-start: rgba(255, 255, 255, 0.9);
+            --bg-gradient-end: rgba(230, 230, 230, 0.9);
+        }
+
+        [data-theme="neon"] {
+            --bg-color: #1a0b2e;
+            --text-color: #e0e0ff;
+            --header-bg: #2a1b3d;
+            --video-bg: #000;
+            --comment-bg: #2a1b3d;
+            --comment-border: #443266;
+            --accent-color: #ff00ff;
+            --button-bg: #443266;
+            --button-hover-bg: #554477;
+            --highlight-bg: #3a2b4d;
+            --scrollbar-track: #2a1b3d;
+            --scrollbar-thumb: #ff00ff;
+            --footer-bg: #2a1b3d;
+            --footer-text: #cccccc;
+            --bg-gradient-start: rgba(26, 11, 46, 0.9);
+            --bg-gradient-end: rgba(68, 50, 102, 0.9);
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(45deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            color: var(--text-color);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header {
+            background: var(--header-bg);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .header .logo {
+            font-size: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+        }
+
+        .header .logo .material-icons {
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 8px;
+        }
+
+        .theme-btn {
+            padding: 6px 12px;
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .theme-btn:hover {
+            background: var(--button-hover-bg);
+        }
+
+        .container {
+            display: flex;
+            max-width: 1280px;
+            margin: 56px auto 60px; /* Increased bottom margin for footer */
+            padding: 0 16px;
+            gap: 16px;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .video-section {
+            flex: 2;
+            max-width: 720px;
+        }
+
+        .video-player {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: var(--video-bg);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+        }
+
+        .video-info {
+            padding: 16px 0;
+            text-align: center;
+        }
+
+        .video-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0 0 8px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .video-list {
+            margin-top: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .video-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .video-item:hover {
+            background: var(--highlight-bg);
+        }
+
+        .video-item img {
+            width: 120px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 12px;
+        }
+
+        .video-item .video-item-title {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .comments-section {
+            flex: 1;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 8px;
+            max-width: 400px;
+        }
+
+        .comment-input {
+            margin-bottom: 16px;
+        }
+
+        .comment-input textarea {
+            width: 100%;
+            background: var(--comment-bg);
+            border: 1px solid var(--comment-border);
+            color: var(--text-color);
+            padding: 8px;
+            font-size: 13px;
+            resize: none;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .comment-input textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .comment-input button {
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 8px;
+            transition: var(--transition);
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .comment-input button:hover {
+            background: #cc0000;
+        }
+
+        .comment {
+            display: flex;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--comment-border);
+            cursor: pointer;
+            animation: slideIn 0.3s ease;
+        }
+
+        .comment:hover {
+            background: var(--highlight-bg);
+        }
+
+        .comment .timestamp {
+            color: var(--accent-color);
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 12px;
+            min-width: 50px;
+        }
+
+        .comment .text {
+            font-size: 13px;
+        }
+
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            text-align: center;
+            padding: 12px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 12px;
+            font-weight: 400;
+            z-index: 100;
+            box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="header">
+        <div class="logo">
+            <i class="material-icons">play_circle</i>
+            MyTube
+        </div>
+        <div class="theme-switcher">
+            <button class="theme-btn" onclick="setTheme('dark')">Dark</button>
+            <button class="theme-btn" onclick="setTheme('light')">Light</button>
+            <button class="theme-btn" onclick="setTheme('neon')">Neon</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="video-section">
+            <div class="video-player">
+                <video id="videoPlayer" controls>
+                    <source id="videoSource" src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="video-info">
+                <h1 id="videoTitle" class="video-title">Sample Video 1</h1>
+            </div>
+            <div class="video-list" id="videoList">
+                <!-- Video items will be populated by JavaScript -->
+            </div>
+        </div>
+        <div class="comments-section">
+            <div class="comment-input">
+                <textarea id="commentText" placeholder="Add a public comment..."></textarea>
+                <button onclick="addComment()">Comment</button>
+            </div>
+            <div id="commentsList"></div>
+        </div>
+    </div>
+    <footer class="footer">
+        All Rights Reserved MyTube
+    </footer>
+
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoSource = document.getElementById('videoSource');
+        const videoTitle = document.getElementById('videoTitle');
+        const commentText = document.getElementById('commentText');
+        const commentsList = document.getElementById('commentsList');
+        const videoList = document.getElementById('videoList');
+        let comments = {};
+        let currentVideoId = 'video1';
+
+        // Sample video data
+        const videos = [
+            {
+                id: 'video1',
+                title: 'Sample Video 1',
+                src: 'https://www.w3schools.com/html/mov_bbb.mp4',
+                thumbnail: 'https://img.youtube.com/vi/5qap5aO4i9A/0.jpg'
+            },
+            {
+                id: 'video2',
+                title: 'Sample Video 2',
+                src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+                thumbnail: 'https://img.youtube.com/vi/8I4dEuW0kwA/0.jpg'
+            },
+            {
+                id: 'video3',
+                title: 'Sample Video 3',
+                src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                thumbnail: 'https://img.youtube.com/vi/YE7VzlLtp-4/0.jpg'
+            }
+        ];
+
+        // Theme management
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+
+        // Initialize comments for each video
+        videos.forEach(video => {
+            if (!comments[video.id]) comments[video.id] = [];
+        });
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function loadVideo(video) {
+            currentVideoId = video.id;
+            videoSource.src = video.src;
+            videoTitle.textContent = video.title;
+            videoPlayer.load();
+            renderComments();
+        }
+
+        function addComment() {
+            const text = commentText.value.trim();
+            if (!text) return;
+
+            const timestamp = videoPlayer.currentTime;
+            const comment = {
+                timestamp,
+                text,
+                id: Date.now()
+            };
+            comments[currentVideoId].push(comment);
+            comments[currentVideoId].sort((a, b) => a.timestamp - b.timestamp);
+            renderComments();
+            commentText.value = '';
+        }
+
+        function renderComments() {
+            commentsList.innerHTML = '';
+            const currentComments = comments[currentVideoId] || [];
+            currentComments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment';
+                commentDiv.innerHTML = `
+                    <span class="timestamp">${formatTime(comment.timestamp)}</span>
+                    <span class="text">${comment.text}</span>
+                `;
+                commentDiv.onclick = () => {
+                    videoPlayer.currentTime = comment.timestamp;
+                    videoPlayer.play();
+                };
+                commentsList.appendChild(commentDiv);
+            });
+        }
+
+        function renderVideoList() {
+            videoList.innerHTML = '';
+            videos.forEach(video => {
+                const videoItem = document.createElement('div');
+                videoItem.className = 'video-item';
+                videoItem.innerHTML = `
+                    <img src="${video.thumbnail}" alt="${video.title}">
+                    <span class="video-item-title">${video.title}</span>
+                `;
+                videoItem.onclick = () => {
+                    loadVideo(video);
+                    videoPlayer.play();
+                };
+                videoList.appendChild(videoItem);
+            });
+        }
+
+        videoPlayer.addEventListener('timeupdate', () => {
+            const currentTime = videoPlayer.currentTime;
+            const activeComment = comments[currentVideoId].find(c => 
+                Math.abs(c.timestamp - currentTime) < 0.5
+            );
+            if (activeComment) {
+                const commentElements = commentsList.querySelectorAll('.comment');
+                commentElements.forEach(elem => {
+                    if (elem.textContent.includes(activeComment.text)) {
+                        elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        elem.style.background = 'var(--highlight-bg)';
+                        setTimeout(() => elem.style.background = '', 1000);
+                    }
+                });
+            }
+        });
+
+        commentText.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                addComment();
+            }
+        });
+
+        // Initialize
+        renderVideoList();
+        loadVideo(videos[0]);
+    </script>
+</body>
+</html>
